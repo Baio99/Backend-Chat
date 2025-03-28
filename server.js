@@ -5,6 +5,9 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const socketio = require('socket.io');
 const http = require('http');
+const roomRoutes = require('./routes/roomRoutes');
+const authMiddleware = require('./middlewares/auth');
+
 
 // Configuración básica
 const app = express();
@@ -13,6 +16,10 @@ const server = http.createServer(app);
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+//  rutas salas
+app.use('/api/auth', authRoutes);
+app.use('/api/rooms', roomRoutes); // Nuevas rutas de salas
 
 // Conexión a MongoDB
 connectDB();
@@ -28,9 +35,12 @@ const io = socketio(server, {
 io.on('connection', (socket) => {
   console.log(`⚡: Usuario conectado (ID: ${socket.id})`);
 
-  socket.on('unirseSala', (nombreSala) => {
-    socket.join(nombreSala);
-    socket.to(nombreSala).emit('mensaje', `Usuario ${socket.id} se unió al chat.`);
+  socket.on('unirseSala', async (roomId) => {
+    const room = await Room.findById(roomId);
+    if (room) {
+      socket.join(roomId);
+      io.to(roomId).emit('mensaje', `Usuario se unió a la sala: ${room.name}`);
+    }
   });
 
   socket.on('mensaje', (data) => {
