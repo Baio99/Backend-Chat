@@ -74,6 +74,11 @@ io.on('connection', (socket) => {
     io.emit('salaCreada', room);
   });
 
+  socket.on('salaBorrada', (roomId) => {
+    // Broadcast a todos los clientes conectados
+    io.emit('salaEliminada', roomId);
+  });
+
 
   socket.on('disconnect', () => {
     console.log('🔥: Usuario desconectado', socket.id);
