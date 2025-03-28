@@ -3,35 +3,39 @@ const jwt = require('jsonwebtoken');
 
 // Registro de usuario
 // Registro de usuario - VERSIÓN MEJORADA
+// Registro de usuario - VERSIÓN CORREGIDA
 exports.register = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Validación básica
+    // PRIMERO verificar si el usuario existe (antes de validar longitud)
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(409).json({ 
+        error: 'El nombre de usuario ya está registrado. Por favor elige otro.',
+        field: 'username',
+        code: 'USERNAME_EXISTS'
+      });
+    }
+
+    // LUEGO validar longitud de campos
     if (!username || username.length < 4) {
       return res.status(400).json({ 
         error: 'El usuario debe tener al menos 4 caracteres',
-        field: 'username'
+        field: 'username',
+        code: 'USERNAME_TOO_SHORT'
       });
     }
     
     if (!password || password.length < 6) {
       return res.status(400).json({ 
         error: 'La contraseña debe tener al menos 6 caracteres',
-        field: 'password'
+        field: 'password',
+        code: 'PASSWORD_TOO_SHORT'
       });
     }
 
-    // Verificar si el usuario existe
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(409).json({ 
-        error: 'El nombre de usuario ya está registrado. Por favor elige otro.',
-        field: 'username'
-      });
-    }
-
-    // Crear nuevo usuario
+    // Si pasa todas las validaciones, crear usuario
     const user = new User({ username, password });
     await user.save();
     
@@ -42,36 +46,55 @@ exports.register = async (req, res) => {
     });
     
   } catch (error) {
-    // Capturar errores de MongoDB (incluyendo duplicados)
+    // Capturar errores de MongoDB (duplicados)
     if (error.code === 11000) {
       return res.status(409).json({ 
         error: 'El nombre de usuario ya está registrado. Por favor elige otro.',
-        field: 'username'
+        field: 'username',
+        code: 'USERNAME_EXISTS'
       });
     }
     res.status(400).json({ 
-      error: 'Error en el registro. Por favor intenta nuevamente.'
+      error: 'Error en el registro. Por favor intenta nuevamente.',
+      code: 'REGISTRATION_ERROR'
     });
   }
 };
 
 
-// Añade esta nueva función al controlador
+// Función para verificar usuario (opcional pero recomendada)
 exports.checkUsername = async (req, res) => {
   try {
-      const { username } = req.body;
-      
-      if (!username || username.length < 4) {
-          return res.json({ exists: false, valid: false });
-      }
-      
-      const user = await User.findOne({ username });
-      res.json({ 
-          exists: !!user,
-          valid: username.length >= 4
+    const { username } = req.body;
+    
+    // PRIMERO verificar si existe
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.json({ 
+        exists: true,
+        valid: false,
+        error: 'El nombre de usuario ya está registrado'
       });
+    }
+    
+    // LUEGO validar longitud
+    if (!username || username.length < 4) {
+      return res.json({ 
+        exists: false,
+        valid: false,
+        error: 'El usuario debe tener al menos 4 caracteres'
+      });
+    }
+    
+    res.json({ 
+      exists: false,
+      valid: true
+    });
   } catch (error) {
-      res.status(500).json({ error: 'Error verificando usuario' });
+    res.status(500).json({ 
+      error: 'Error verificando usuario',
+      code: 'CHECK_ERROR'
+    });
   }
 };
 
