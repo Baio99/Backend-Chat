@@ -7,41 +7,51 @@ exports.register = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Validación básica de frontend (por si falla la del cliente)
+    // Validación básica
     if (!username || username.length < 4) {
-      return res.status(400).json({ error: 'El usuario debe tener al menos 4 caracteres' });
+      return res.status(400).json({ 
+        error: 'El usuario debe tener al menos 4 caracteres',
+        field: 'username'
+      });
     }
     
     if (!password || password.length < 6) {
-      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
-    }
-
-    // Verificar si el usuario ya existe ANTES de intentar crearlo
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(409).json({ 
-        error: 'El nombre de usuario ya está en uso',
-        code: 'USERNAME_EXISTS'
+      return res.status(400).json({ 
+        error: 'La contraseña debe tener al menos 6 caracteres',
+        field: 'password'
       });
     }
 
+    // Verificar si el usuario existe
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(409).json({ 
+        error: 'El nombre de usuario ya está registrado. Por favor elige otro.',
+        field: 'username'
+      });
+    }
+
+    // Crear nuevo usuario
     const user = new User({ username, password });
     await user.save();
     
     res.status(201).json({ 
-      message: 'Usuario registrado exitosamente',
+      success: true,
+      message: '¡Registro exitoso!',
       username: user.username
     });
     
   } catch (error) {
-    // Captura errores de MongoDB (incluyendo duplicados por si acaso)
+    // Capturar errores de MongoDB (incluyendo duplicados)
     if (error.code === 11000) {
       return res.status(409).json({ 
-        error: 'El nombre de usuario ya está en uso',
-        code: 'USERNAME_EXISTS'
+        error: 'El nombre de usuario ya está registrado. Por favor elige otro.',
+        field: 'username'
       });
     }
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ 
+      error: 'Error en el registro. Por favor intenta nuevamente.'
+    });
   }
 };
 
