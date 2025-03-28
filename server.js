@@ -68,6 +68,13 @@ io.on('connection', (socket) => {
     io.to(data.sala).emit('mensaje', mensajeCompleto);
   });
 
+   // Nueva función para emitir la creación de salas en tiempo real
+  socket.on('nuevaSala', (room) => {
+    // Broadcast a todos los clientes conectados
+    io.emit('salaCreada', room);
+  });
+
+
   socket.on('disconnect', () => {
     console.log('🔥: Usuario desconectado', socket.id);
   });
