@@ -43,12 +43,26 @@ io.on('connection', (socket) => {
     const room = await Room.findById(roomId);
     if (room) {
       socket.join(roomId);
-      io.to(roomId).emit('mensaje', `Usuario se unió a la sala: ${room.name}`);
+      // Emitir a todos en la sala que un usuario se unió
+      io.to(roomId).emit('mensaje', { 
+        tipo: 'sistema', 
+        texto: `Un usuario se unió a la sala: ${room.name}` 
+      });
     }
   });
 
   socket.on('mensaje', (data) => {
-    io.to(data.sala).emit('mensaje', { usuario: socket.id, texto: data.texto });
+    // Emitir el mensaje a todos los usuarios en esa sala
+    io.to(data.sala).emit('mensaje', { 
+      usuario: socket.id, 
+      texto: data.texto 
+    });
+  });
+
+  // Nueva función para emitir la creación de salas en tiempo real
+  socket.on('nuevaSala', (room) => {
+    // Broadcast a todos los clientes conectados
+    io.emit('salaCreada', room);
   });
 
   socket.on('disconnect', () => {
