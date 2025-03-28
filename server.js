@@ -7,6 +7,7 @@ const socketio = require('socket.io');
 const http = require('http');
 const roomRoutes = require('./routes/roomRoutes');
 const authMiddleware = require('./middlewares/auth');
+const Room = require('./models/Room');
 
 
 // Configuración básica
@@ -14,7 +15,10 @@ const app = express();
 const server = http.createServer(app);
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: true, // Permite cualquier origen (en desarrollo)
+  credentials: true
+}));
 app.use(express.json());
 
 //  rutas salas
