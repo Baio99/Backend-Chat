@@ -56,6 +56,25 @@ exports.register = async (req, res) => {
 };
 
 
+// Añade esta nueva función al controlador
+exports.checkUsername = async (req, res) => {
+  try {
+      const { username } = req.body;
+      
+      if (!username || username.length < 4) {
+          return res.json({ exists: false, valid: false });
+      }
+      
+      const user = await User.findOne({ username });
+      res.json({ 
+          exists: !!user,
+          valid: username.length >= 4
+      });
+  } catch (error) {
+      res.status(500).json({ error: 'Error verificando usuario' });
+  }
+};
+
 // Inicio de sesión
 exports.login = async (req, res) => {
   try {
