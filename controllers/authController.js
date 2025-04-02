@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { redisClient } = require('../config/redis');
 
 // Registro de usuario
 // Registro de usuario - VERSIÓN MEJORADA
@@ -98,7 +99,7 @@ exports.checkUsername = async (req, res) => {
   }
 };
 
-// Inicio de sesión
+
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -109,7 +110,20 @@ exports.login = async (req, res) => {
     if (!isMatch) throw new Error('Contraseña incorrecta');
 
     const token = jwt.sign({ id: user._id }, 'secreto', { expiresIn: '1h' });
-    res.json({ token, userId: user._id });
+    
+    // Marcar usuario como online en Redis
+    await redisClient.hSet(`user:${user._id}`, {
+      online: 'true',
+      lastSeen: new Date().toISOString(),
+      currentRoom: '',
+      username: user.username
+    });
+    
+    res.json({ 
+      token, 
+      userId: user._id,
+      username: user.username
+    });
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
