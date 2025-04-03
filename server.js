@@ -11,6 +11,9 @@ const Room = require('./models/Room');
 const statusRoutes = require('./routes/statusRoutes');
 const { createAdapter } = require('@socket.io/redis-adapter');
 const { connectRedis, redisClient } = require('./config/redis'); // Importamos también redisClient
+// Agrega esto al inicio con las otras importaciones
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger/swaggerConfig');
 
 // Función principal async
 const startServer = async () => {
@@ -24,6 +27,10 @@ const startServer = async () => {
     credentials: true
   }));
   app.use(express.json());
+
+  
+// Agrega esto después de app.use(express.json());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   // Rutas
   app.use('/api/auth', authRoutes);
