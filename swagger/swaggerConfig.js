@@ -11,7 +11,7 @@ const options = {
       description: 'API para sistema de chat en tiempo real',
       contact: {
         name: 'Bryan Adrian',
-        email: 'bryanadrian39@example.com'
+        email: 'bryanadrian38@hotmail.com'
       },
     },
     servers: [
